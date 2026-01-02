@@ -1,7 +1,119 @@
 import { sdk } from 'https://esm.sh/@farcaster/frame-sdk';
 
-// Initialize Farcaster SDK
-sdk.actions.ready();
+// User data
+let currentUser = null;
+let leaderboard = [];
+
+// Initialize Farcaster SDK and get user context
+async function initFarcaster() {
+    try {
+        sdk.actions.ready();
+        
+        // Get user context from Farcaster
+        const context = await sdk.context;
+        
+        if (context && context.user) {
+            currentUser = {
+                fid: context.user.fid,
+                username: context.user.username || `User${context.user.fid}`,
+                displayName: context.user.displayName || context.user.username,
+                pfp: context.user.pfpUrl
+            };
+            
+            document.getElementById('username').textContent = '@' + currentUser.username;
+        }
+        
+        // Load leaderboard
+        loadLeaderboard();
+    } catch (e) {
+        console.log('Farcaster context not available:', e);
+        // Use local storage fallback
+        const savedUser = localStorage.getItem('bubbleUser');
+        if (savedUser) {
+            currentUser = JSON.parse(savedUser);
+            document.getElementById('username').textContent = currentUser.username;
+        }
+        loadLeaderboard();
+    }
+}
+
+// Leaderboard functions
+function loadLeaderboard() {
+    const saved = localStorage.getItem('bubbleLeaderboard');
+    if (saved) {
+        leaderboard = JSON.parse(saved);
+    }
+    updateLeaderboardDisplay();
+}
+
+function saveToLeaderboard(playerScore) {
+    if (!currentUser) return;
+    
+    // Find existing entry
+    const existingIndex = leaderboard.findIndex(e => e.fid === currentUser.fid);
+    
+    if (existingIndex >= 0) {
+        // Update if new score is higher
+        if (playerScore > leaderboard[existingIndex].score) {
+            leaderboard[existingIndex].score = playerScore;
+            leaderboard[existingIndex].date = Date.now();
+        }
+    } else {
+        // Add new entry
+        leaderboard.push({
+            fid: currentUser.fid,
+            username: currentUser.username,
+            displayName: currentUser.displayName,
+            score: playerScore,
+            date: Date.now()
+        });
+    }
+    
+    // Sort by score descending
+    leaderboard.sort((a, b) => b.score - a.score);
+    
+    // Keep top 100
+    leaderboard = leaderboard.slice(0, 100);
+    
+    // Save
+    localStorage.setItem('bubbleLeaderboard', JSON.stringify(leaderboard));
+    updateLeaderboardDisplay();
+}
+
+function updateLeaderboardDisplay() {
+    const listEl = document.getElementById('leaderboard-list');
+    if (!listEl) return;
+    
+    if (leaderboard.length === 0) {
+        listEl.innerHTML = '<p style="color: #888; text-align: center;">Henüz skor yok</p>';
+        return;
+    }
+    
+    listEl.innerHTML = leaderboard.slice(0, 20).map((entry, index) => {
+        const rankClass = index === 0 ? '' : index === 1 ? 'silver' : index === 2 ? 'bronze' : 'normal';
+        const rankSymbol = index === 0 ? '👑' : index === 1 ? '🥈' : index === 2 ? '🥉' : (index + 1);
+        const isCurrentUser = currentUser && entry.fid === currentUser.fid;
+        
+        return `
+            <div class="leaderboard-item ${isCurrentUser ? 'current-user' : ''}">
+                <span class="rank ${rankClass}">${rankSymbol}</span>
+                <span class="player-name">@${entry.username}</span>
+                <span class="player-score">${entry.score.toLocaleString()}</span>
+            </div>
+        `;
+    }).join('');
+}
+
+function showLeaderboard() {
+    document.getElementById('leaderboard-modal').classList.remove('hidden');
+}
+
+function hideLeaderboard() {
+    document.getElementById('leaderboard-modal').classList.add('hidden');
+}
+
+// Initialize Farcaster
+initFarcaster();
 
 // Game Constants
 const BUBBLE_RADIUS = 18;
@@ -710,6 +822,9 @@ function saveHighScore() {
         localStorage.setItem('bubbleHighScore', highScore.toString());
         updateUI();
     }
+    
+    // Save to leaderboard
+    saveToLeaderboard(score);
 }
 
 // Show overlay
@@ -1030,6 +1145,53 @@ function init() {
             isPaused = false;
             document.getElementById('pauseBtn').textContent = '⏸️';
             hideOverlay();
+        }
+    });
+    
+    // Leaderboard button
+    document.getElementById('leaderboard-btn').addEventListener('click', () => {
+        showLeaderboard();
+    });
+    
+    // Close leaderboard
+    document.getElementById('close-leaderboard').addEventListener('click', () => {
+        hideLeaderboard();
+    });
+    
+    // Close leaderboard on outside click
+    document.getElementById('leaderboard-modal').addEventListener('click', (e) => {
+        if (e.target.id === 'leaderboard-modal') {
+            hideLeaderboard();
+        }
+    });
+    
+    // User info click - show wallet info
+    document.getElementById('user-info').addEventListener('click', async () => {
+        if (currentUser) {
+            showOverlay('Profil', `@${currentUser.username}\nFID: ${currentUser.fid}`, 'Tamam');
+        } else {
+            // Try to get context again
+            try {
+                const context = await sdk.context;
+                if (context && context.user) {
+                    currentUser = {
+                        fid: context.user.fid,
+                        username: context.user.username || `User${context.user.fid}`,
+                        displayName: context.user.displayName || context.user.username
+                    };
+                    document.getElementById('username').textContent = '@' + currentUser.username;
+                }
+            } catch (e) {
+                // Generate guest user
+                const guestId = Math.floor(Math.random() * 100000);
+                currentUser = {
+                    fid: guestId,
+                    username: `Misafir${guestId}`,
+                    displayName: `Misafir ${guestId}`
+                };
+                localStorage.setItem('bubbleUser', JSON.stringify(currentUser));
+                document.getElementById('username').textContent = currentUser.username;
+            }
         }
     });
     

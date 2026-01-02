@@ -19,11 +19,16 @@
                 <span class="ui-label">Skor</span>
                 <span id="score" class="ui-value">0</span>
             </div>
-            <div class="ui-item">
-                <span class="ui-label">En Yüksek</span>
+            <div class="ui-item clickable" id="leaderboard-btn">
+                <span class="ui-label">🏆</span>
                 <span id="highscore" class="ui-value">0</span>
             </div>
         </div>
+        
+        <div id="user-info">
+            <span id="username">Bağlan</span>
+        </div>
+        
         <canvas id="gameCanvas"></canvas>
         <button id="pauseBtn">⏸️</button>
         <div id="next-bubble"></div>
@@ -34,6 +39,14 @@
             <h2 id="overlay-title">Oyun Duraklatıldı</h2>
             <p id="overlay-message"></p>
             <button id="overlay-btn">Devam Et</button>
+        </div>
+    </div>
+    
+    <div id="leaderboard-modal" class="hidden">
+        <div id="leaderboard-content">
+            <h2>🏆 Liderlik Tablosu</h2>
+            <div id="leaderboard-list"></div>
+            <button id="close-leaderboard">Kapat</button>
         </div>
     </div>
 
