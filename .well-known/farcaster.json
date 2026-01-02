@@ -1,27 +1,26 @@
 {
   "accountAssociation": {
-    "header": "[FARCASTER'DAN ALINACAK]",
-    "payload": "[FARCASTER'DAN ALINACAK]",
-    "signature": "[FARCASTER'DAN ALINACAK]"
+    "header": "eyJmaWQiOjQyMDAxNiwidHlwZSI6ImF1dGgiLCJrZXkiOiIweDUzQ0QzQzUzYTU3YWE2MEU0MjUxQTc3QzJiNjIyMEZFRTcyN2RDODgifQ",
+    "payload": "eyJkb21haW4iOiJidWJibGUtc2hvb3Rlci13aW5lLnZlcmNlbC5hcHAifQ",
+    "signature": "jQ0S7nDsxMMUzp8TxD2sUoBl0KP7yt5PDNPnsIUu6c5Bq6tHF9j20x7I+F8UjZN9w1TJTCCVMVOlFj0nrwaYlRs="
   },
   "frame": {
     "version": "1",
     "name": "Bubble Shooter",
     "subtitle": "Balon Patlatma Oyunu",
     "description": "Klasik balon patlatma oyunu. Aynı renk balonları eşleştir, kombo yap ve yüksek skor kazan!",
-    "iconUrl": "https://[DOMAIN]/icon.png",
-    "homeUrl": "https://[DOMAIN]",
-    "imageUrl": "https://[DOMAIN]/preview.png",
-    "splashImageUrl": "https://[DOMAIN]/icon.png",
+    "iconUrl": "https://bubble-shooter-wine.vercel.app/icon.png",
+    "homeUrl": "https://bubble-shooter-wine.vercel.app",
+    "imageUrl": "https://bubble-shooter-wine.vercel.app/preview.png",
+    "splashImageUrl": "https://bubble-shooter-wine.vercel.app/icon.png",
     "splashBackgroundColor": "#87CEEB",
     "primaryCategory": "games",
-    "tags": ["game", "arcade", "puzzle", "farcaster"],
-    "tagline": "Balonları Patlat, Skor Kazan!",
-    "heroImageUrl": "https://[DOMAIN]/preview.png",
-    "screenshotUrls": ["https://[DOMAIN]/preview.png"],
-    "ogTitle": "Bubble Shooter - Farcaster Mini App",
-    "ogDescription": "Klasik balon patlatma oyunu. Aynı renk balonları eşleştir ve yüksek skor kazan!",
-    "ogImageUrl": "https://[DOMAIN]/preview.png"
+    "tags": ["game", "arcade", "puzzle"],
+    "tagline": "Balonları Patlat!",
+    "heroImageUrl": "https://bubble-shooter-wine.vercel.app/preview.png",
+    "screenshotUrls": [],
+    "ogTitle": "Bubble Shooter",
+    "ogDescription": "Balon patlatma oyunu",
+    "ogImageUrl": "https://bubble-shooter-wine.vercel.app/preview.png"
   }
 }
-
