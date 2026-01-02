@@ -9,8 +9,27 @@ let leaderboard = [];
 async function initFarcaster() {
     try {
         sdk.actions.ready();
-        
-        // Get user context from Farcaster
+    } catch (e) {
+        console.log('SDK ready error:', e);
+    }
+    
+    // Check for saved user first
+    const savedUser = localStorage.getItem('bubbleUser');
+    const savedWallet = localStorage.getItem('bubbleWallet');
+    
+    if (savedWallet) {
+        walletAddress = savedWallet;
+    }
+    
+    if (savedUser) {
+        currentUser = JSON.parse(savedUser);
+        document.getElementById('username').textContent = currentUser.username;
+        loadLeaderboard();
+        return;
+    }
+    
+    // Try to get Farcaster context
+    try {
         const context = await sdk.context;
         console.log('Farcaster context:', context);
         
@@ -23,66 +42,29 @@ async function initFarcaster() {
             };
             
             document.getElementById('username').textContent = '@' + currentUser.username;
+            localStorage.setItem('bubbleUser', JSON.stringify(currentUser));
         } else {
             document.getElementById('username').textContent = 'Bağlan';
         }
-        
-        // Load leaderboard
-        loadLeaderboard();
     } catch (e) {
         console.log('Farcaster context not available:', e);
         document.getElementById('username').textContent = 'Bağlan';
-        loadLeaderboard();
     }
+    
+    // Load leaderboard
+    loadLeaderboard();
 }
 
-// Connect wallet using Farcaster SDK
+// Connect wallet using Farcaster SDK or window.ethereum
 async function connectWallet() {
     try {
-        // Check if we have Farcaster context
-        const context = await sdk.context;
-        
-        if (context && context.user) {
-            currentUser = {
-                fid: context.user.fid,
-                username: context.user.username || `User${context.user.fid}`,
-                displayName: context.user.displayName || context.user.username,
-                pfp: context.user.pfpUrl
-            };
-            document.getElementById('username').textContent = '@' + currentUser.username;
-        }
-        
-        // Try to get wallet address using ethProvider
-        if (sdk.wallet && sdk.wallet.ethProvider) {
-            const provider = sdk.wallet.ethProvider;
-            const accounts = await provider.request({ method: 'eth_requestAccounts' });
-            
-            if (accounts && accounts.length > 0) {
-                walletAddress = accounts[0];
-                const shortAddress = walletAddress.slice(0, 6) + '...' + walletAddress.slice(-4);
-                
-                if (currentUser) {
-                    document.getElementById('username').textContent = '@' + currentUser.username;
-                } else {
-                    document.getElementById('username').textContent = shortAddress;
-                    currentUser = {
-                        fid: walletAddress,
-                        username: shortAddress,
-                        displayName: shortAddress
-                    };
-                }
-                
-                localStorage.setItem('bubbleWallet', walletAddress);
-                showOverlay('Bağlandı! ✅', `Cüzdan: ${shortAddress}`, 'Tamam');
-            }
-        } else {
-            // Fallback: try window.ethereum
-            if (window.ethereum) {
+        // First try window.ethereum (MetaMask, etc.)
+        if (typeof window !== 'undefined' && window.ethereum) {
+            try {
                 const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
                 if (accounts && accounts.length > 0) {
                     walletAddress = accounts[0];
                     const shortAddress = walletAddress.slice(0, 6) + '...' + walletAddress.slice(-4);
-                    document.getElementById('username').textContent = shortAddress;
                     
                     currentUser = {
                         fid: walletAddress,
@@ -90,22 +72,83 @@ async function connectWallet() {
                         displayName: shortAddress
                     };
                     
+                    document.getElementById('username').textContent = shortAddress;
                     localStorage.setItem('bubbleWallet', walletAddress);
-                    showOverlay('Bağlandı! ✅', `Cüzdan: ${shortAddress}`, 'Tamam');
+                    localStorage.setItem('bubbleUser', JSON.stringify(currentUser));
+                    
+                    showInfoOverlay('Bağlandı! ✅', `Cüzdan: ${shortAddress}`);
+                    return;
                 }
-            } else {
-                // No wallet available - create guest
-                createGuestUser();
+            } catch (ethError) {
+                console.log('Ethereum wallet error:', ethError);
             }
         }
+        
+        // Try Farcaster SDK wallet
+        try {
+            if (sdk.wallet && sdk.wallet.ethProvider) {
+                const provider = sdk.wallet.ethProvider;
+                const accounts = await provider.request({ method: 'eth_requestAccounts' });
+                
+                if (accounts && accounts.length > 0) {
+                    walletAddress = accounts[0];
+                    const shortAddress = walletAddress.slice(0, 6) + '...' + walletAddress.slice(-4);
+                    
+                    currentUser = {
+                        fid: walletAddress,
+                        username: shortAddress,
+                        displayName: shortAddress
+                    };
+                    
+                    document.getElementById('username').textContent = shortAddress;
+                    localStorage.setItem('bubbleWallet', walletAddress);
+                    localStorage.setItem('bubbleUser', JSON.stringify(currentUser));
+                    
+                    showInfoOverlay('Bağlandı! ✅', `Cüzdan: ${shortAddress}`);
+                    return;
+                }
+            }
+        } catch (sdkError) {
+            console.log('SDK wallet error:', sdkError);
+        }
+        
+        // Try Farcaster context
+        try {
+            const context = await sdk.context;
+            if (context && context.user) {
+                currentUser = {
+                    fid: context.user.fid,
+                    username: context.user.username || `User${context.user.fid}`,
+                    displayName: context.user.displayName || context.user.username,
+                    pfp: context.user.pfpUrl
+                };
+                document.getElementById('username').textContent = '@' + currentUser.username;
+                localStorage.setItem('bubbleUser', JSON.stringify(currentUser));
+                
+                showInfoOverlay('Hoşgeldin!', `@${currentUser.username}`);
+                return;
+            }
+        } catch (contextError) {
+            console.log('Context error:', contextError);
+        }
+        
+        // No wallet available - create guest
+        createGuestUser();
+        
     } catch (e) {
         console.error('Wallet connection error:', e);
-        // Create guest user as fallback
         createGuestUser();
     }
 }
 
 function createGuestUser() {
+    const savedUser = localStorage.getItem('bubbleUser');
+    if (savedUser) {
+        currentUser = JSON.parse(savedUser);
+        document.getElementById('username').textContent = currentUser.username;
+        return;
+    }
+    
     const guestId = Math.floor(Math.random() * 100000);
     currentUser = {
         fid: guestId,
@@ -114,7 +157,18 @@ function createGuestUser() {
     };
     localStorage.setItem('bubbleUser', JSON.stringify(currentUser));
     document.getElementById('username').textContent = currentUser.username;
-    showOverlay('Misafir Mod', 'Cüzdan bulunamadı.\nMisafir olarak devam ediyorsun.', 'Tamam');
+    showInfoOverlay('Misafir Mod', 'Cüzdan bulunamadı. Misafir olarak devam.');
+}
+
+// Simple info overlay that auto-closes
+function showInfoOverlay(title, message) {
+    document.getElementById('overlay-title').textContent = title;
+    document.getElementById('overlay-message').textContent = message;
+    document.getElementById('overlay-btn').textContent = 'Tamam';
+    document.getElementById('overlay').classList.remove('hidden');
+    
+    // Mark as info overlay
+    document.getElementById('overlay').dataset.type = 'info';
 }
 
 // Leaderboard functions
@@ -1213,6 +1267,15 @@ function init() {
     
     // Overlay button
     document.getElementById('overlay-btn').addEventListener('click', () => {
+        const overlayType = document.getElementById('overlay').dataset.type;
+        
+        // Info overlay - just close it
+        if (overlayType === 'info') {
+            document.getElementById('overlay').dataset.type = '';
+            hideOverlay();
+            return;
+        }
+        
         if (gameOver) {
             score = 0;
             level = 1;
@@ -1224,6 +1287,9 @@ function init() {
         } else if (isPaused) {
             isPaused = false;
             document.getElementById('pauseBtn').textContent = '⏸️';
+            hideOverlay();
+        } else {
+            // Default: just close
             hideOverlay();
         }
     });
