@@ -2,6 +2,7 @@ import { sdk } from 'https://esm.sh/@farcaster/frame-sdk';
 
 // User data
 let currentUser = null;
+let walletAddress = null;
 let leaderboard = [];
 
 // Initialize Farcaster SDK and get user context
@@ -11,6 +12,7 @@ async function initFarcaster() {
         
         // Get user context from Farcaster
         const context = await sdk.context;
+        console.log('Farcaster context:', context);
         
         if (context && context.user) {
             currentUser = {
@@ -21,20 +23,98 @@ async function initFarcaster() {
             };
             
             document.getElementById('username').textContent = '@' + currentUser.username;
+        } else {
+            document.getElementById('username').textContent = 'Bağlan';
         }
         
         // Load leaderboard
         loadLeaderboard();
     } catch (e) {
         console.log('Farcaster context not available:', e);
-        // Use local storage fallback
-        const savedUser = localStorage.getItem('bubbleUser');
-        if (savedUser) {
-            currentUser = JSON.parse(savedUser);
-            document.getElementById('username').textContent = currentUser.username;
-        }
+        document.getElementById('username').textContent = 'Bağlan';
         loadLeaderboard();
     }
+}
+
+// Connect wallet using Farcaster SDK
+async function connectWallet() {
+    try {
+        // Check if we have Farcaster context
+        const context = await sdk.context;
+        
+        if (context && context.user) {
+            currentUser = {
+                fid: context.user.fid,
+                username: context.user.username || `User${context.user.fid}`,
+                displayName: context.user.displayName || context.user.username,
+                pfp: context.user.pfpUrl
+            };
+            document.getElementById('username').textContent = '@' + currentUser.username;
+        }
+        
+        // Try to get wallet address using ethProvider
+        if (sdk.wallet && sdk.wallet.ethProvider) {
+            const provider = sdk.wallet.ethProvider;
+            const accounts = await provider.request({ method: 'eth_requestAccounts' });
+            
+            if (accounts && accounts.length > 0) {
+                walletAddress = accounts[0];
+                const shortAddress = walletAddress.slice(0, 6) + '...' + walletAddress.slice(-4);
+                
+                if (currentUser) {
+                    document.getElementById('username').textContent = '@' + currentUser.username;
+                } else {
+                    document.getElementById('username').textContent = shortAddress;
+                    currentUser = {
+                        fid: walletAddress,
+                        username: shortAddress,
+                        displayName: shortAddress
+                    };
+                }
+                
+                localStorage.setItem('bubbleWallet', walletAddress);
+                showOverlay('Bağlandı! ✅', `Cüzdan: ${shortAddress}`, 'Tamam');
+            }
+        } else {
+            // Fallback: try window.ethereum
+            if (window.ethereum) {
+                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                if (accounts && accounts.length > 0) {
+                    walletAddress = accounts[0];
+                    const shortAddress = walletAddress.slice(0, 6) + '...' + walletAddress.slice(-4);
+                    document.getElementById('username').textContent = shortAddress;
+                    
+                    currentUser = {
+                        fid: walletAddress,
+                        username: shortAddress,
+                        displayName: shortAddress
+                    };
+                    
+                    localStorage.setItem('bubbleWallet', walletAddress);
+                    showOverlay('Bağlandı! ✅', `Cüzdan: ${shortAddress}`, 'Tamam');
+                }
+            } else {
+                // No wallet available - create guest
+                createGuestUser();
+            }
+        }
+    } catch (e) {
+        console.error('Wallet connection error:', e);
+        // Create guest user as fallback
+        createGuestUser();
+    }
+}
+
+function createGuestUser() {
+    const guestId = Math.floor(Math.random() * 100000);
+    currentUser = {
+        fid: guestId,
+        username: `Misafir${guestId}`,
+        displayName: `Misafir ${guestId}`
+    };
+    localStorage.setItem('bubbleUser', JSON.stringify(currentUser));
+    document.getElementById('username').textContent = currentUser.username;
+    showOverlay('Misafir Mod', 'Cüzdan bulunamadı.\nMisafir olarak devam ediyorsun.', 'Tamam');
 }
 
 // Leaderboard functions
@@ -1165,33 +1245,16 @@ function init() {
         }
     });
     
-    // User info click - show wallet info
+    // User info click - connect wallet or show profile
     document.getElementById('user-info').addEventListener('click', async () => {
-        if (currentUser) {
+        if (currentUser && walletAddress) {
+            const shortAddress = walletAddress.slice(0, 6) + '...' + walletAddress.slice(-4);
+            showOverlay('Profil', `${currentUser.username}\nCüzdan: ${shortAddress}`, 'Tamam');
+        } else if (currentUser) {
             showOverlay('Profil', `@${currentUser.username}\nFID: ${currentUser.fid}`, 'Tamam');
         } else {
-            // Try to get context again
-            try {
-                const context = await sdk.context;
-                if (context && context.user) {
-                    currentUser = {
-                        fid: context.user.fid,
-                        username: context.user.username || `User${context.user.fid}`,
-                        displayName: context.user.displayName || context.user.username
-                    };
-                    document.getElementById('username').textContent = '@' + currentUser.username;
-                }
-            } catch (e) {
-                // Generate guest user
-                const guestId = Math.floor(Math.random() * 100000);
-                currentUser = {
-                    fid: guestId,
-                    username: `Misafir${guestId}`,
-                    displayName: `Misafir ${guestId}`
-                };
-                localStorage.setItem('bubbleUser', JSON.stringify(currentUser));
-                document.getElementById('username').textContent = currentUser.username;
-            }
+            // Connect wallet
+            await connectWallet();
         }
     });
     
