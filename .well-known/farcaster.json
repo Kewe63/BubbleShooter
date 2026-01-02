@@ -1,0 +1,27 @@
+{
+  "accountAssociation": {
+    "header": "[FARCASTER'DAN ALINACAK]",
+    "payload": "[FARCASTER'DAN ALINACAK]",
+    "signature": "[FARCASTER'DAN ALINACAK]"
+  },
+  "frame": {
+    "version": "1",
+    "name": "Bubble Shooter",
+    "subtitle": "Balon Patlatma Oyunu",
+    "description": "Klasik balon patlatma oyunu. Aynı renk balonları eşleştir, kombo yap ve yüksek skor kazan!",
+    "iconUrl": "https://[DOMAIN]/icon.png",
+    "homeUrl": "https://[DOMAIN]",
+    "imageUrl": "https://[DOMAIN]/preview.png",
+    "splashImageUrl": "https://[DOMAIN]/icon.png",
+    "splashBackgroundColor": "#87CEEB",
+    "primaryCategory": "games",
+    "tags": ["game", "arcade", "puzzle", "farcaster"],
+    "tagline": "Balonları Patlat, Skor Kazan!",
+    "heroImageUrl": "https://[DOMAIN]/preview.png",
+    "screenshotUrls": ["https://[DOMAIN]/preview.png"],
+    "ogTitle": "Bubble Shooter - Farcaster Mini App",
+    "ogDescription": "Klasik balon patlatma oyunu. Aynı renk balonları eşleştir ve yüksek skor kazan!",
+    "ogImageUrl": "https://[DOMAIN]/preview.png"
+  }
+}
+

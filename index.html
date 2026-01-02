@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="fc:frame" content="vNext">
+    <meta name="base:app_id" content="">
+    <title>Bubble Shooter</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="game-container">
+        <div id="ui-panel">
+            <div class="ui-item">
+                <span class="ui-label">Bölüm</span>
+                <span id="level" class="ui-value">1</span>
+            </div>
+            <div class="ui-item">
+                <span class="ui-label">Skor</span>
+                <span id="score" class="ui-value">0</span>
+            </div>
+            <div class="ui-item">
+                <span class="ui-label">En Yüksek</span>
+                <span id="highscore" class="ui-value">0</span>
+            </div>
+        </div>
+        <canvas id="gameCanvas"></canvas>
+        <button id="pauseBtn">⏸️</button>
+        <div id="next-bubble"></div>
+    </div>
+    
+    <div id="overlay" class="hidden">
+        <div id="overlay-content">
+            <h2 id="overlay-title">Oyun Duraklatıldı</h2>
+            <p id="overlay-message"></p>
+            <button id="overlay-btn">Devam Et</button>
+        </div>
+    </div>
+
+    <script type="module" src="game.js"></script>
+</body>
+</html>
+

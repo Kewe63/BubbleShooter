@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bubble Shooter - Icon Generator</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            margin: 0;
+        }
+        h1 {
+            color: white;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .container {
+            display: flex;
+            gap: 40px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+        canvas {
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+        h3 {
+            margin: 0 0 15px 0;
+            color: #333;
+        }
+        a {
+            display: inline-block;
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        a:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102,126,234,0.4);
+        }
+        .info {
+            color: white;
+            margin-top: 30px;
+            background: rgba(255,255,255,0.2);
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 600px;
+        }
+        .info p {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🫧 Bubble Shooter Icon Generator</h1>
+    
+    <div class="container">
+        <div class="card">
+            <h3>icon.png (200x200)</h3>
+            <canvas id="iconCanvas" width="200" height="200"></canvas>
+            <br>
+            <a id="iconDownload" download="icon.png">Download icon.png</a>
+        </div>
+        
+        <div class="card">
+            <h3>preview.png (600x400)</h3>
+            <canvas id="previewCanvas" width="600" height="400"></canvas>
+            <br>
+            <a id="previewDownload" download="preview.png">Download preview.png</a>
+        </div>
+    </div>
+    
+    <div class="info">
+        <p>📥 Her iki dosyayı da indir</p>
+        <p>📁 İndirilen dosyaları proje klasörüne taşı</p>
+        <p>🚀 Sonra deploy et</p>
+    </div>
+
+    <script>
+        const COLORS = ['#E63946', '#457B9D', '#2A9D8F', '#F4A261', '#FFD60A', '#00BBF9'];
+
+        function drawBubble(ctx, x, y, radius, color) {
+            const gradient = ctx.createRadialGradient(
+                x - radius * 0.3, y - radius * 0.3, radius * 0.1,
+                x, y, radius
+            );
+            gradient.addColorStop(0, '#FFFFFF');
+            gradient.addColorStop(0.3, color);
+            gradient.addColorStop(1, darkenColor(color, 40));
+            
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
+            ctx.fillStyle = gradient;
+            ctx.fill();
+            
+            // Highlight
+            ctx.beginPath();
+            ctx.arc(x - radius * 0.25, y - radius * 0.25, radius * 0.3, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+            ctx.fill();
+        }
+
+        function darkenColor(color, amount) {
+            const hex = color.replace('#', '');
+            const r = Math.max(0, parseInt(hex.substr(0, 2), 16) - amount);
+            const g = Math.max(0, parseInt(hex.substr(2, 2), 16) - amount);
+            const b = Math.max(0, parseInt(hex.substr(4, 2), 16) - amount);
+            return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+        }
+
+        // Draw Icon (200x200)
+        function drawIcon() {
+            const canvas = document.getElementById('iconCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Background gradient
+            const bgGrad = ctx.createLinearGradient(0, 0, 200, 200);
+            bgGrad.addColorStop(0, '#87CEEB');
+            bgGrad.addColorStop(1, '#E0F6FF');
+            ctx.fillStyle = bgGrad;
+            ctx.fillRect(0, 0, 200, 200);
+            
+            // Draw bubbles in pattern
+            const bubbles = [
+                { x: 100, y: 50, r: 30, c: COLORS[0] },
+                { x: 60, y: 90, r: 30, c: COLORS[1] },
+                { x: 140, y: 90, r: 30, c: COLORS[2] },
+                { x: 40, y: 130, r: 25, c: COLORS[3] },
+                { x: 100, y: 130, r: 30, c: COLORS[0] },
+                { x: 160, y: 130, r: 25, c: COLORS[4] },
+                { x: 70, y: 170, r: 20, c: COLORS[5] },
+                { x: 130, y: 170, r: 20, c: COLORS[1] }
+            ];
+            
+            bubbles.forEach(b => drawBubble(ctx, b.x, b.y, b.r, b.c));
+            
+            // Set download link
+            document.getElementById('iconDownload').href = canvas.toDataURL('image/png');
+        }
+
+        // Draw Preview (600x400)
+        function drawPreview() {
+            const canvas = document.getElementById('previewCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Background gradient
+            const bgGrad = ctx.createLinearGradient(0, 0, 0, 400);
+            bgGrad.addColorStop(0, '#87CEEB');
+            bgGrad.addColorStop(0.5, '#E0F6FF');
+            bgGrad.addColorStop(1, '#FFF5E6');
+            ctx.fillStyle = bgGrad;
+            ctx.fillRect(0, 0, 600, 400);
+            
+            // Draw grid of bubbles at top
+            const radius = 25;
+            const rows = 4;
+            for (let row = 0; row < rows; row++) {
+                const cols = row % 2 === 0 ? 11 : 10;
+                const offset = row % 2 === 1 ? radius : 0;
+                
+                for (let col = 0; col < cols; col++) {
+                    const x = col * radius * 2 + radius + offset + 25;
+                    const y = row * radius * 1.73 + radius + 30;
+                    const color = COLORS[Math.floor(Math.random() * 6)];
+                    drawBubble(ctx, x, y, radius - 2, color);
+                }
+            }
+            
+            // Draw shooter bubble at bottom
+            drawBubble(ctx, 300, 350, 28, COLORS[0]);
+            
+            // Draw aim line
+            ctx.strokeStyle = 'rgba(100, 100, 100, 0.5)';
+            ctx.lineWidth = 3;
+            ctx.setLineDash([10, 10]);
+            ctx.beginPath();
+            ctx.moveTo(300, 350);
+            ctx.lineTo(200, 200);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            
+            // Title
+            ctx.fillStyle = '#333';
+            ctx.font = 'bold 36px Segoe UI';
+            ctx.textAlign = 'center';
+            ctx.fillText('Bubble Shooter', 300, 320);
+            
+            // Subtitle
+            ctx.fillStyle = '#666';
+            ctx.font = '18px Segoe UI';
+            ctx.fillText('Farcaster Mini App', 300, 350);
+            
+            // Set download link
+            document.getElementById('previewDownload').href = canvas.toDataURL('image/png');
+        }
+
+        // Initialize
+        drawIcon();
+        drawPreview();
+    </script>
+</body>
+</html>
+
